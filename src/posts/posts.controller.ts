@@ -1,17 +1,30 @@
-import { Body, Controller, Delete, Get, Logger, Param, Patch, Post, Query, UseGuards, UseInterceptors, ValidationPipe } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Logger,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
 import { PostsService } from './posts.service';
-import { PostDocument } from './schemas/post.schema';
-import { UserDocument } from '../auth/schemas/user.schema';
-import { GetPostsFilterDto } from './dto/get-posts-filter.dto';
-import { CreatePostDto } from './dto/create-post.dto';
-import { GetUser } from '../auth/get-user.decorator';
-import { MongooseDocVersionInterceptor } from '../helpers/mongoose-doc-version-interceptor';
-import { ObjectIdValidationPipe } from './pipes/object-id-validation.pipe';
+import { PopulatedPostWithUser, PostDocument } from './schemas/post.schema';
+import { UserDocument } from '../users/schemas/user.schema';
+import { GetPostsFilterDto } from './dto/getPostsFilter.dto';
+import { CreatePostDto } from './dto/createPost.dto';
+import { GetUser } from '../users/getUser.decorator';
+import { MongooseDocVersionInterceptor } from '../helpers/mongooseDocVersion.interceptor';
+import { ObjectIdValidationPipe } from './pipes/objectIdValidation.pipe';
+import implicitQueryParams from 'nestjs-implicit-query-params';
+import WithMessageAuthGuard from 'src/helpers/withMessageAuth.guard';
 
 @Controller('posts')
-@UseGuards(AuthGuard())
+@UseGuards(WithMessageAuthGuard())
 @UseInterceptors(MongooseDocVersionInterceptor)
 export class PostsController {
   private logger = new Logger('PostsController');
@@ -23,16 +36,18 @@ export class PostsController {
     @Body() createPostDto: CreatePostDto,
     @GetUser() user: UserDocument,
   ): Promise<PostDocument> {
-    this.logger.verbose(`User "${user.username}" creating a new task. Data: ${JSON.stringify(createPostDto)}`);
+    this.logger.verbose(`User "${user.username}" creating a new post. Data: ${JSON.stringify(createPostDto)}`);
 
     return this.postsService.createPost(createPostDto, user);
   }
 
   @Get()
   getPosts(
-    @Query(ValidationPipe) filterDto: GetPostsFilterDto,
+    @Query(implicitQueryParams({
+      personal: fieldValue => fieldValue === 'true',
+    })) filterDto: GetPostsFilterDto,
     @GetUser() user: UserDocument,
-  ): Promise<PostDocument[]> {
+  ): Promise<{ posts: PostDocument[], total: number }> {
     this.logger.verbose(
       `User "${user.username}" retrieving the posts. Filters: ${JSON.stringify(filterDto)}`,
     );
@@ -43,9 +58,8 @@ export class PostsController {
   @Get('/:id')
   getPostById(
     @Param('id', ObjectIdValidationPipe) id: Types.ObjectId,
-    @GetUser() user: UserDocument,
-  ): Promise<PostDocument> {
-    return this.postsService.getPost(id, user);
+  ): Promise<PopulatedPostWithUser> {
+    return this.postsService.getPost(id);
   }
 
   @Patch('/:id')

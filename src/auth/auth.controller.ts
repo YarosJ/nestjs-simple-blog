@@ -1,5 +1,6 @@
 import { Controller, Post, Body, ValidationPipe } from '@nestjs/common';
-import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { UserCredentialsDto } from '../users/dto/userCredentials.dto';
+import { SignInResponse } from './dto/signInResponse.dto';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -8,13 +9,20 @@ export class AuthController {
     private authService: AuthService,
   ) {}
 
-  @Post('/signup')
-  signUp(@Body(ValidationPipe) authCredentialsDto: AuthCredentialsDto): Promise<void> {
-    return this.authService.signUp(authCredentialsDto);
+  @Post('/signUp')
+  signUp(@Body(ValidationPipe) userCredentialsDto: UserCredentialsDto): Promise<void> {
+    return this.authService.signUp(userCredentialsDto);
   }
 
-  @Post('/signin')
-  signIn(@Body(ValidationPipe) authCredentialsDto: AuthCredentialsDto): Promise<{ accessToken: string }> {
-    return this.authService.signIn(authCredentialsDto);
+  @Post('/signIn')
+  signIn(@Body(ValidationPipe) userCredentialsDto: UserCredentialsDto): Promise<SignInResponse> {
+    return this.authService.signIn(userCredentialsDto);
+  }
+
+  @Post('/refreshToken')
+  refreshToken(
+    @Body() { refreshToken }: { refreshToken: string },
+  ): Promise<{ accessToken: string }> {
+    return this.authService.refreshToken(refreshToken);
   }
 }

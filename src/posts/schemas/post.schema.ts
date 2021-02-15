@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { UserDocument } from '../../auth/schemas/user.schema';
+import PopulatedDocument from '../../types/PopulatedDocument';
+import { UserDocument } from '../../users/schemas/user.schema';
 
 @Schema()
 export class Post {
@@ -14,10 +15,12 @@ export class Post {
   createdAt: Date;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
-  user: UserDocument;
+  user: Types.ObjectId;
 }
 
 export type PostDocument = Post & Document;
+
+export type PopulatedPostWithUser = PopulatedDocument<PostDocument, UserDocument, 'user'>;
 
 const PostSchema = SchemaFactory.createForClass(Post);
 

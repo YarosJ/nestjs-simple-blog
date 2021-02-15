@@ -1,10 +1,10 @@
 import { Model, Types } from 'mongoose';
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post, PostDocument } from './schemas/post.schema';
-import { CreatePostDto } from './dto/create-post.dto';
-import { GetPostsFilterDto } from './dto/get-posts-filter.dto';
-import { UserDocument } from '../auth/schemas/user.schema';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PopulatedPostWithUser, Post, PostDocument } from './schemas/post.schema';
+import { UserDocument } from '../users/schemas/user.schema';
+import { GetPostsFilterDto } from './dto/getPostsFilter.dto';
+import { CreatePostDto } from './dto/createPost.dto';
 
 const throwPostNotFoundError = (postId: string|Types.ObjectId): never => {
   throw new NotFoundException(`Post with ID "${postId}" not found`);
@@ -19,11 +19,23 @@ export class PostsService {
   /**
    * Fetch posts by filters
    */
-  getPosts(
-    { text, personal }: GetPostsFilterDto,
-    user: UserDocument,
-  ): Promise<PostDocument[]> {
+  async getPosts(
+    {
+      text,
+      sorting,
+      pageNumber,
+      pageSize,
+      personal,
+      user,
+    }: GetPostsFilterDto,
+    userDocument: UserDocument,
+  ): Promise<{ posts: PostDocument[], total: number }> {
     const postsQuery = this.postModel.find();
+    const userId = personal ? userDocument._id : user;
+
+    if (userId) {
+      postsQuery.find({ user: Types.ObjectId(userId) });
+    }
 
     if (text) {
       postsQuery.find(
@@ -32,25 +44,38 @@ export class PostsService {
       );
     }
 
-    if (personal) {
-      postsQuery.find({ user: user._id });
+    if (sorting) {
+      postsQuery.sort({ createdAt: sorting });
     }
 
-    return postsQuery.populate(userDefaultPopulationConfig).exec();
+    const totalQuery = this.postModel.find().merge(postsQuery).countDocuments();
+
+    if (pageNumber) {
+      postsQuery.skip((pageNumber - 1) * (pageSize || 1));
+    }
+
+    if (pageSize) {
+      postsQuery.limit(pageSize);
+    }
+
+    console.log(postsQuery.getFilter());
+    return {
+      posts: await postsQuery.populate(userDefaultPopulationConfig).exec(),
+      total: await totalQuery.exec(),
+    };
   }
 
   /**
    * Get a single post
    * @param postId
-   * @param user
    */
-  async getPost(postId: Types.ObjectId, user: UserDocument): Promise<PostDocument> {
-    const foundPost: PostDocument = await this.postModel
+  async getPost(postId: Types.ObjectId): Promise<PopulatedPostWithUser> {
+    const foundPost: PopulatedPostWithUser = await this.postModel
       .findById(postId)
       .populate(userDefaultPopulationConfig)
-      .exec();
+      .exec() as PopulatedPostWithUser;
 
-    if (!foundPost || foundPost.user.id !== user.id) {
+    if (!foundPost) {
       throwPostNotFoundError(postId);
     }
 
@@ -104,7 +129,7 @@ export class PostsService {
    */
   async deletePost(postId: Types.ObjectId, user: UserDocument): Promise<void> {
     const deletedPost = await this.postModel.findOneAndDelete(
-      { _id: postId, user: user._id},
+      { _id: postId, user: user._id },
     );
 
     if (!deletedPost) {

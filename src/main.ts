@@ -7,16 +7,18 @@ async function bootstrap() {
   const serverConfig = config.get('server');
   const logger = new Logger('bootstrap');
   const app = await NestFactory.create(AppModule);
+  const corsConfig = serverConfig.cors;
 
-  if (process.env.NODE_ENV === 'development') {
-    app.enableCors();
-  } else {
-    app.enableCors({ origin: serverConfig.origin });
-    logger.log(`Accepting requests from origin "${serverConfig.origin}"`);
+  if (corsConfig && process.env.NODE_ENV !== 'development') {
+    logger.log(`Accepting requests from origin "${corsConfig.origin}"`);
   }
 
+  app.enableCors(corsConfig);
+
   const port = process.env.PORT || serverConfig.port;
+
   await app.listen(port);
+
   logger.log(`Application listening on port ${port}`);
 }
 

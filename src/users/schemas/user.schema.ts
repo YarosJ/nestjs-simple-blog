@@ -1,8 +1,13 @@
 import * as bcrypt from 'bcryptjs';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-@Schema()
+@Schema({
+  toJSON: {
+    virtuals: true,
+    versionKey: false,
+  },
+})
 export class User {
   @Prop({ required: true, unique: true })
   username: string;
@@ -13,8 +18,8 @@ export class User {
   @Prop({ required: true, hidden: true })
   salt: string;
 
-  @Prop({ type: [Types.ObjectId], ref: 'Post' })
-  posts: Types.ObjectId[];
+  @Prop({ required: true, default: Date.now })
+  createdAt: Date;
 
   public async validatePassword(password: string): Promise<boolean> {
     const hash = await bcrypt.hash(password, this.salt);
@@ -27,6 +32,13 @@ export type UserDocument = User & Document;
 
 const UserSchema = SchemaFactory.createForClass(User);
 
+UserSchema.virtual('posts', {
+  ref: 'Post',
+  localField: '_id',
+  foreignField: 'user',
+  justOne: false,
+});
+UserSchema.index({ username: 'text' });
 UserSchema.loadClass(User);
 
 export default UserSchema;
