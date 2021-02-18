@@ -3,5 +3,5 @@ server:
 
 jwt:
   expiresIn:
-    accessToken: '30m'
-    refreshToken: '1d'
+    accessToken: 1800
+    refreshToken: 86400

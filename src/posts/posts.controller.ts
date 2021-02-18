@@ -12,6 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
+import * as sanitizeHtml from 'sanitize-html';
 import { PostsService } from './posts.service';
 import { PopulatedPostWithUser, PostDocument } from './schemas/post.schema';
 import { UserDocument } from '../users/schemas/user.schema';
@@ -33,12 +34,17 @@ export class PostsController {
 
   @Post()
   createPost(
-    @Body() createPostDto: CreatePostDto,
+    @Body() { title, body }: CreatePostDto,
     @GetUser() user: UserDocument,
   ): Promise<PostDocument> {
-    this.logger.verbose(`User "${user.username}" creating a new post. Data: ${JSON.stringify(createPostDto)}`);
+    this.logger.verbose(
+      `User "${user.username}" creating a new post. Data: ${JSON.stringify({ title, body })}`,
+    );
 
-    return this.postsService.createPost(createPostDto, user);
+    return this.postsService.createPost(
+      { title, body: sanitizeHtml(body) },
+      user,
+    );
   }
 
   @Get()
@@ -65,10 +71,14 @@ export class PostsController {
   @Patch('/:id')
   updatePost(
     @Param('id', ObjectIdValidationPipe) id: Types.ObjectId,
-    @Body() updatePostDto: CreatePostDto,
+    @Body() { title, body }: CreatePostDto,
     @GetUser() user: UserDocument,
   ): Promise<PostDocument> {
-    return this.postsService.updatePost(id, updatePostDto, user);
+    return this.postsService.updatePost(
+      id,
+      { title, body: sanitizeHtml(body) },
+      user,
+    );
   }
 
   @Delete('/:id')

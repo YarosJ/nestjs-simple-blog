@@ -3,8 +3,8 @@ import { UserDocument } from './schemas/user.schema';
 
 export const GetUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): UserDocument => {
-    const request = ctx.switchToHttp().getRequest();
+    const { user } = ctx.switchToHttp().getRequest();
 
-    return request.user;
+    return user;
   },
 );
