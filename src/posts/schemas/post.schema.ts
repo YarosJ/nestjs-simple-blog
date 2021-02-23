@@ -2,8 +2,16 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import PopulatedDocument from '../../types/PopulatedDocument';
 import { UserDocument } from '../../users/schemas/user.schema';
+import { Logger } from '@nestjs/common';
 
-@Schema()
+const logger = new Logger('PostSchema');
+
+@Schema({
+  toJSON: {
+    virtuals: true,
+    versionKey: false,
+  },
+})
 export class Post {
   @Prop({ required: true })
   title: string;
@@ -24,6 +32,22 @@ export type PopulatedPostWithUser = PopulatedDocument<PostDocument, UserDocument
 
 const PostSchema = SchemaFactory.createForClass(Post);
 
+PostSchema.virtual('resources', {
+  ref: 'Resource',
+  localField: '_id',
+  foreignField: 'post',
+  justOne: false,
+});
 PostSchema.index({ title: 'text', body: 'text' });
+PostSchema.pre('findOneAndDelete', async function(next) {
+  const post: PostDocument = await this.findOne(this);
+  const { length }: { length: number } = await post.model('Resource').deleteMany(
+    { post: post._id },
+    null,
+    next,
+  );
+
+  logger.verbose(`Removing resources. Resources count: ${length}`);
+});
 
 export default PostSchema;

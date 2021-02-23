@@ -17,6 +17,39 @@ export class PostsService {
   constructor(@InjectModel(Post.name) private readonly postModel: Model<PostDocument>) { }
 
   /**
+   * Post a single post
+   * @param createPostDto
+   * @param user
+   */
+  async createPost(
+    createPostDto: CreatePostDto,
+    user: UserDocument,
+  ): Promise<PostDocument> {
+    const createdPost: PostDocument = await this.postModel.create(
+      { ...createPostDto, user: user._id },
+    );
+
+    return createdPost.populate(userDefaultPopulationConfig);
+  }
+
+  /**
+   * Get a single post
+   * @param postId
+   */
+  async getPost(postId: Types.ObjectId): Promise<PopulatedPostWithUser> {
+    const foundPost: PopulatedPostWithUser = await this.postModel
+      .findById(postId)
+      .populate(userDefaultPopulationConfig)
+      .exec() as PopulatedPostWithUser;
+
+    if (!foundPost) {
+      throwPostNotFoundError(postId);
+    }
+
+    return foundPost;
+  }
+
+  /**
    * Fetch posts by filters
    */
   async getPosts(
@@ -58,44 +91,10 @@ export class PostsService {
       postsQuery.limit(pageSize);
     }
 
-    console.log(postsQuery.getFilter());
     return {
-      posts: await postsQuery.populate(userDefaultPopulationConfig).exec(),
+      posts: await postsQuery.populate(userDefaultPopulationConfig).populate('resources').exec(),
       total: await totalQuery.exec(),
     };
-  }
-
-  /**
-   * Get a single post
-   * @param postId
-   */
-  async getPost(postId: Types.ObjectId): Promise<PopulatedPostWithUser> {
-    const foundPost: PopulatedPostWithUser = await this.postModel
-      .findById(postId)
-      .populate(userDefaultPopulationConfig)
-      .exec() as PopulatedPostWithUser;
-
-    if (!foundPost) {
-      throwPostNotFoundError(postId);
-    }
-
-    return foundPost;
-  }
-
-  /**
-   * Post a single post
-   * @param createPostDto
-   * @param user
-   */
-  async createPost(
-    createPostDto: CreatePostDto,
-    user: UserDocument,
-  ): Promise<PostDocument> {
-    const createdPost: PostDocument = await this.postModel.create(
-      { ...createPostDto, user: user._id },
-    );
-
-    return createdPost.populate(userDefaultPopulationConfig);
   }
 
   /**

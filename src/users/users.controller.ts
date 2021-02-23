@@ -13,7 +13,7 @@ import { UsersService } from './users.service';
 import { UserDocument } from './schemas/user.schema';
 import { GetUsersFilterDto } from './dto/getUsersFilter.dto';
 import { MongooseDocVersionInterceptor } from '../helpers/mongooseDocVersion.interceptor';
-import { ObjectIdValidationPipe } from './pipes/objectIdValidation.pipe';
+import { ObjectIdValidationPipe } from '../helpers/pipes/objectIdValidation.pipe';
 import ImplicitParamsValidationPipe from './pipes/implicitParamsValidation.pipe';
 import WithMessageAuthGuard from 'src/helpers/withMessageAuth.guard';
 

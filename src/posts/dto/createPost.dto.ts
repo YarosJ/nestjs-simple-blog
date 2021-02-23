@@ -6,4 +6,7 @@ export class CreatePostDto {
 
   @IsNotEmpty()
   body: string;
+
+  @IsNotEmpty()
+  _id?: string;
 }
