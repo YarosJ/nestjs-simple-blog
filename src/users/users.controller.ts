@@ -2,10 +2,11 @@ import {
   Controller,
   Get,
   Delete,
-  Param,
   Query,
+  Param,
   UseGuards,
   UseInterceptors,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
@@ -15,10 +16,15 @@ import { GetUsersFilterDto } from './dto/getUsersFilter.dto';
 import { MongooseDocVersionInterceptor } from '../helpers/mongooseDocVersion.interceptor';
 import { ObjectIdValidationPipe } from '../helpers/pipes/objectIdValidation.pipe';
 import ImplicitParamsValidationPipe from './pipes/implicitParamsValidation.pipe';
-import WithMessageAuthGuard from 'src/helpers/withMessageAuth.guard';
+import RequiredUserAuthGuard from 'src/helpers/RequiredUserAuth.guard';
+import RolesGuard from '../roles/roles.guard';
+import { Roles } from '../roles/roles.decorator';
+import { GetUser } from './getUser.decorator';
+import { Role } from '../enums/role.enum';
 
+@Roles(Role.Admin)
 @Controller('users')
-@UseGuards(WithMessageAuthGuard())
+@UseGuards(RequiredUserAuthGuard, RolesGuard)
 @UseInterceptors(MongooseDocVersionInterceptor)
 export class UsersController {
   private logger = new Logger('UsersController');
@@ -39,7 +45,12 @@ export class UsersController {
   @Delete('/:id')
   deleteUser(
     @Param('id', ObjectIdValidationPipe) id: Types.ObjectId,
+    @GetUser() { _id }: UserDocument,
   ): Promise<void> {
+    if (id.equals(_id)) {
+      throw new ForbiddenException('User cannot delete himself!');
+    }
+
     return this.usersService.deleteUser(id);
   }
 }

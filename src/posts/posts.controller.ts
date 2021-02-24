@@ -13,16 +13,20 @@ import {
 } from '@nestjs/common';
 import { Types } from 'mongoose';
 import * as sanitizeHtml from 'sanitize-html';
-import { PostsService } from './posts.service';
+import implicitQueryParams from 'nestjs-implicit-query-params';
 import { PopulatedPostWithUser, PostDocument } from './schemas/post.schema';
 import { UserDocument } from '../users/schemas/user.schema';
-import { GetPostsFilterDto } from './dto/getPostsFilter.dto';
+import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/createPost.dto';
+import { GetPostsFilterDto } from './dto/getPostsFilter.dto';
 import { GetUser } from '../users/getUser.decorator';
+import { Roles } from '../roles/roles.decorator';
 import { MongooseDocVersionInterceptor } from '../helpers/mongooseDocVersion.interceptor';
 import { ObjectIdValidationPipe } from '../helpers/pipes/objectIdValidation.pipe';
-import implicitQueryParams from 'nestjs-implicit-query-params';
-import WithMessageAuthGuard from 'src/helpers/withMessageAuth.guard';
+import RequiredUserAuthGuard from '../helpers/RequiredUserAuth.guard';
+import OptionalUserAuthGuard from '../helpers/OptionalUserAuth.guard';
+import RolesGuard from '../roles/roles.guard';
+import { Role } from '../enums/role.enum';
 
 const { allowedTags, allowedAttributes } = sanitizeHtml.defaults;
 
@@ -35,7 +39,6 @@ const sanitizeHtmlOptions = {
 };
 
 @Controller('posts')
-@UseGuards(WithMessageAuthGuard())
 @UseInterceptors(MongooseDocVersionInterceptor)
 export class PostsController {
   private logger = new Logger('PostsController');
@@ -43,6 +46,8 @@ export class PostsController {
   constructor(private postsService: PostsService) { }
 
   @Post()
+  @Roles(Role.User, Role.Admin)
+  @UseGuards(RequiredUserAuthGuard, RolesGuard)
   createPost(
     @Body() { title, body, _id }: CreatePostDto,
     @GetUser() user: UserDocument,
@@ -58,6 +63,7 @@ export class PostsController {
   }
 
   @Get()
+  @UseGuards(OptionalUserAuthGuard)
   getPosts(
     @Query(implicitQueryParams({
       personal: fieldValue => fieldValue === 'true',
@@ -65,13 +71,15 @@ export class PostsController {
     @GetUser() user: UserDocument,
   ): Promise<{ posts: PostDocument[], total: number }> {
     this.logger.verbose(
-      `User "${user.username}" retrieving the posts. Filters: ${JSON.stringify(filterDto)}`,
+      `Retrieving the posts. Filters: ${JSON.stringify(filterDto)}`,
     );
 
     return this.postsService.getPosts(filterDto, user);
   }
 
   @Get('/newId')
+  @Roles(Role.User, Role.Admin)
+  @UseGuards(RequiredUserAuthGuard, RolesGuard)
   fetchNewPostId(): Types.ObjectId { return Types.ObjectId(); }
 
   @Get('/:id')
@@ -82,6 +90,8 @@ export class PostsController {
   }
 
   @Patch('/:id')
+  @Roles(Role.User, Role.Admin)
+  @UseGuards(RequiredUserAuthGuard, RolesGuard)
   updatePost(
     @Param('id', ObjectIdValidationPipe) id: Types.ObjectId,
     @Body() { title, body }: CreatePostDto,
@@ -95,6 +105,8 @@ export class PostsController {
   }
 
   @Delete('/:id')
+  @Roles(Role.User, Role.Admin)
+  @UseGuards(RequiredUserAuthGuard, RolesGuard)
   deletePost(
     @Param('id', ObjectIdValidationPipe) id: Types.ObjectId,
     @GetUser() user: UserDocument,

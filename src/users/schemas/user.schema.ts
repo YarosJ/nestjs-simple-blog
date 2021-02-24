@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcryptjs';
 import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Role } from '../../enums/role.enum';
 
 @Schema({
   toJSON: {
@@ -20,6 +21,9 @@ export class User {
 
   @Prop({ required: true, default: Date.now })
   createdAt: Date;
+
+  @Prop({ required: true, default: [Role.User] })
+  roles: Role[];
 
   public async validatePassword(password: string): Promise<boolean> {
     const hash = await bcrypt.hash(password, this.salt);

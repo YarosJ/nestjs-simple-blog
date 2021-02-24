@@ -1,9 +1,9 @@
-import { Model, Types } from 'mongoose';
+import { DocumentDefinition, Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
 import {
-  ConflictException,
   Injectable,
+  ConflictException,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,6 +11,7 @@ import { User, UserDocument } from './schemas/user.schema';
 import { UserCredentialsDto } from './dto/userCredentials.dto';
 import { GetUsersFilterDto } from './dto/getUsersFilter.dto';
 import { GetUserFilterDto } from './dto/getUserFilter.dto';
+import { Role } from '../enums/role.enum';
 
 @Injectable()
 export class UsersService {
@@ -18,13 +19,18 @@ export class UsersService {
 
   async createUser({ username, password }: UserCredentialsDto): Promise<UserDocument> {
     const salt: string = await bcrypt.genSalt();
+    const newUserData: Partial<DocumentDefinition<UserDocument>> = {
+      username,
+      salt,
+      password: await bcrypt.hash(password, salt),
+    };
+
+    if (!await this.userModel.count({})) {
+      newUserData.roles = [Role.Admin];
+    }
 
     try {
-      return await this.userModel.create({
-        username,
-        salt,
-        password: await bcrypt.hash(password, salt),
-      });
+      return await this.userModel.create(newUserData);
     } catch (error) {
       if (error.code === 11000) { // Duplicate username
         throw new ConflictException(`Username ${username} already exists`);

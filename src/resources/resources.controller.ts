@@ -9,13 +9,13 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ResourcesService } from './resources.service';
-import WithMessageAuthGuard from 'src/helpers/withMessageAuth.guard';
+import RequiredUserAuthGuard from 'src/helpers/RequiredUserAuth.guard';
 import { ResourceDocument } from './schemas/resource.schema';
 import { ObjectIdValidationPipe } from '../helpers/pipes/objectIdValidation.pipe';
 import { Types } from 'mongoose';
 
 @Controller('resources')
-@UseGuards(WithMessageAuthGuard())
+@UseGuards(RequiredUserAuthGuard)
 export class ResourcesController {
   private logger = new Logger('ResourcesController');
 

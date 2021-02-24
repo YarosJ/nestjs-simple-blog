@@ -5,7 +5,7 @@ import { UsersService } from '../users/users.service';
 import { UserDocument } from '../users/schemas/user.schema';
 import { SignInResponse } from './dto/signInResponse.dto';
 import { UserCredentialsDto } from '../users/dto/userCredentials.dto';
-import { JwtPayload } from './jwt/jwtPayload.interface';
+import JwtPayload from './jwt/jwtPayload.interface';
 import * as config from 'config';
 
 @Injectable()
@@ -39,7 +39,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { _id } = user;
+    const { _id, roles } = user;
     const payload: JwtPayload = { username, _id };
     const accessToken = await this.jwtService.sign(payload);
     const refreshTokenExpiration = config.get('jwt.expiresIn.refreshToken');
@@ -56,7 +56,7 @@ export class AuthService {
 
     this.logger.debug(`Generated JWT Token with payload ${JSON.stringify(payload)}`);
 
-    return { accessToken, refreshToken, username, _id };
+    return { accessToken, refreshToken, username, _id, roles };
   }
 
   async signOut(id: string) {

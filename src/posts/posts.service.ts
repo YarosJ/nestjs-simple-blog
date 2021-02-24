@@ -64,7 +64,7 @@ export class PostsService {
     userDocument: UserDocument,
   ): Promise<{ posts: PostDocument[], total: number }> {
     const postsQuery = this.postModel.find();
-    const userId = personal ? userDocument._id : user;
+    const userId = personal ? userDocument?._id : user;
 
     if (userId) {
       postsQuery.find({ user: Types.ObjectId(userId) });

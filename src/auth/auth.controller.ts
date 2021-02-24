@@ -4,7 +4,7 @@ import { SignInResponse } from './dto/signInResponse.dto';
 import { AuthService } from './auth.service';
 import { GetUser } from '../users/getUser.decorator';
 import { UserDocument } from '../users/schemas/user.schema';
-import WithMessageAuthGuard from '../helpers/withMessageAuth.guard';
+import RequiredUserAuthGuard from '../helpers/RequiredUserAuth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -23,7 +23,7 @@ export class AuthController {
   }
 
   @Post('/signOut')
-  @UseGuards(WithMessageAuthGuard())
+  @UseGuards(RequiredUserAuthGuard)
   signOut(@GetUser() { _id }: UserDocument): Promise<void> {
     return this.authService.signOut(_id);
   }

@@ -13,5 +13,8 @@ export class SignInResponse {
   username: string;
 
   @IsNotEmpty()
+  roles: string[];
+
+  @IsNotEmpty()
   _id: string;
 }
