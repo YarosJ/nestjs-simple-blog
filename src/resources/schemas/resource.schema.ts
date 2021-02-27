@@ -1,8 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { promises } from 'fs';
-import { join } from 'path';
 import { Logger } from '@nestjs/common';
+import { resolve } from 'path';
+import { promises } from 'fs';
+import * as config from 'config';
 
 const logger = new Logger('ResourceSchema');
 
@@ -19,6 +20,7 @@ export type ResourceDocument = Resource & Document;
 
 const ResourceSchema = SchemaFactory.createForClass(Resource);
 
+// Removing related files from a disk on resource delete
 ResourceSchema.pre('deleteMany', async function(next) {
   const resourcesToRemove: ResourceDocument[] = await this.find(this);
 
@@ -26,7 +28,7 @@ ResourceSchema.pre('deleteMany', async function(next) {
     try {
       logger.verbose(`Removing from disk ${filename}`);
 
-      await promises.unlink(join(__dirname, '../../../static/uploads', filename));
+      await promises.unlink(resolve(config.get('uploads.path'), filename));
 
       logger.verbose(`Resource: ${filename} removed!`);
     } catch (error) {

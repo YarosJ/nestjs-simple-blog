@@ -21,10 +21,10 @@ export class PostsService {
   ) {}
 
   /**
-   * Post a single post
-   * @param resources
+   * Creates a new post
    * @param createPostDto
    * @param user
+   * @param resources
    */
   async createPost(
     createPostDto: CreatePostDto,
@@ -41,7 +41,7 @@ export class PostsService {
   }
 
   /**
-   * Get a single post
+   * Get a single post by id
    * @param postId
    */
   async getPost(postId: Types.ObjectId): Promise<PopulatedPostWithUser> {
@@ -58,7 +58,14 @@ export class PostsService {
   }
 
   /**
-   * Fetch posts by filters
+   * Fetch posts filtered with received criteria
+   * @param text
+   * @param sorting
+   * @param pageNumber
+   * @param pageSize
+   * @param personal
+   * @param user
+   * @param userDocument
    */
   async getPosts(
     {
@@ -100,13 +107,15 @@ export class PostsService {
     }
 
     return {
-      posts: await postsQuery.populate(userDefaultPopulationConfig).populate('resources').exec(),
       total: await totalQuery.exec(),
+      posts: await postsQuery
+        .populate(userDefaultPopulationConfig)
+        .populate('resources').exec(),
     };
   }
 
   /**
-   * Edit post details
+   * Updates post details
    * @param postId
    * @param createPostDto
    * @param user
@@ -134,7 +143,7 @@ export class PostsService {
   }
 
   /**
-   * Delete a post
+   * Deletes a post found by id and owner
    * @param postId
    * @param user
    */

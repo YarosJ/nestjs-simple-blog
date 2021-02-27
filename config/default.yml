@@ -5,3 +5,6 @@ jwt:
   expiresIn:
     accessToken: 1800
     refreshToken: 86400
+
+uploads:
+  path: 'static/uploads'

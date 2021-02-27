@@ -5,18 +5,16 @@ import {
   Query,
   Param,
   UseGuards,
-  UseInterceptors,
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
+import implicitQueryParams from 'nestjs-implicit-query-params';
 import { UsersService } from './users.service';
 import { UserDocument } from './schemas/user.schema';
 import { GetUsersFilterDto } from './dto/getUsersFilter.dto';
-import { MongooseDocVersionInterceptor } from '../helpers/mongooseDocVersion.interceptor';
 import { ObjectIdValidationPipe } from '../helpers/pipes/objectIdValidation.pipe';
-import ImplicitParamsValidationPipe from './pipes/implicitParamsValidation.pipe';
-import RequiredUserAuthGuard from 'src/helpers/RequiredUserAuth.guard';
+import RequiredUserAuthGuard from 'src/helpers/guards/RequiredUserAuth.guard';
 import RolesGuard from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
 import { GetUser } from './getUser.decorator';
@@ -25,7 +23,6 @@ import { Role } from '../enums/role.enum';
 @Roles(Role.Admin)
 @Controller('users')
 @UseGuards(RequiredUserAuthGuard, RolesGuard)
-@UseInterceptors(MongooseDocVersionInterceptor)
 export class UsersController {
   private logger = new Logger('UsersController');
 
@@ -33,7 +30,7 @@ export class UsersController {
 
   @Get()
   getUsers(
-    @Query(ImplicitParamsValidationPipe) usersFilterDto: GetUsersFilterDto,
+    @Query(implicitQueryParams()) usersFilterDto: GetUsersFilterDto,
   ): Promise<{ users: UserDocument[], total: number }> {
     this.logger.verbose(
       `Retrieving users. Filters: ${JSON.stringify(usersFilterDto)}`,

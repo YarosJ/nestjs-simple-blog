@@ -1,10 +1,10 @@
 import { Controller, Post, Body, ValidationPipe, UseGuards } from '@nestjs/common';
-import { UserCredentialsDto } from '../users/dto/userCredentials.dto';
-import { SignInResponse } from './dto/signInResponse.dto';
-import { AuthService } from './auth.service';
-import { GetUser } from '../users/getUser.decorator';
 import { UserDocument } from '../users/schemas/user.schema';
-import RequiredUserAuthGuard from '../helpers/RequiredUserAuth.guard';
+import { AuthService } from './auth.service';
+import { UserCredentialsDto } from '../users/dto/userCredentials.dto';
+import { SignInResponseDto } from './dto/signInResponse.dto';
+import RequiredUserAuthGuard from '../helpers/guards/RequiredUserAuth.guard';
+import { GetUser } from '../users/getUser.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -13,12 +13,16 @@ export class AuthController {
   ) {}
 
   @Post('/signUp')
-  signUp(@Body(ValidationPipe) userCredentialsDto: UserCredentialsDto): Promise<void> {
+  signUp(
+    @Body(ValidationPipe) userCredentialsDto: UserCredentialsDto,
+  ): Promise<void> {
     return this.authService.signUp(userCredentialsDto);
   }
 
   @Post('/signIn')
-  signIn(@Body(ValidationPipe) userCredentialsDto: UserCredentialsDto): Promise<SignInResponse> {
+  signIn(
+    @Body(ValidationPipe) userCredentialsDto: UserCredentialsDto,
+  ): Promise<SignInResponseDto> {
     return this.authService.signIn(userCredentialsDto);
   }
 

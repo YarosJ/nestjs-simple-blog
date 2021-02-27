@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as Redis from 'ioredis';
 import { UsersService } from '../users/users.service';
 import { UserDocument } from '../users/schemas/user.schema';
-import { SignInResponse } from './dto/signInResponse.dto';
+import { SignInResponseDto } from './dto/signInResponse.dto';
 import { UserCredentialsDto } from '../users/dto/userCredentials.dto';
 import JwtPayload from './jwt/jwtPayload.interface';
 import * as config from 'config';
@@ -11,6 +11,7 @@ import * as config from 'config';
 @Injectable()
 export class AuthService {
   private static redisInstance: Redis.Redis;
+
   private logger = new Logger('AuthService');
 
   constructor(
@@ -26,13 +27,23 @@ export class AuthService {
     }
   }
 
+  /**
+   * Creates new user with received credentials
+   * @param userCredentialsDto
+   */
   async signUp(userCredentialsDto: UserCredentialsDto): Promise<void> {
     await this.usersService.createUser(userCredentialsDto);
   }
 
+  /**
+   * Checks passed credentials are valid
+   * and generates JWT access and refresh tokens
+   * @param username
+   * @param password
+   */
   async signIn(
     { username, password }: UserCredentialsDto,
-  ): Promise<SignInResponse> {
+  ): Promise<SignInResponseDto> {
     const user: UserDocument = await this.usersService.getUser({ username });
 
     if (!user || !(await user.validatePassword(password))) {
@@ -47,6 +58,7 @@ export class AuthService {
       expiresIn: refreshTokenExpiration,
     });
 
+    // Writing to the Redis to make able to reset refresh token
     await AuthService.redisInstance.set(
       _id,
       refreshToken,
@@ -59,11 +71,20 @@ export class AuthService {
     return { accessToken, refreshToken, username, _id, roles };
   }
 
-  async signOut(id: string) {
-    this.logger.debug(`Reset Refresh Token for id: ${id}`);
-    await AuthService.redisInstance.del(id);
+  /**
+   * Resets refresh token
+   * @param userId
+   */
+  async signOut(userId: string) {
+    this.logger.debug(`Reset Refresh Token for user with id: ${userId}`);
+
+    await AuthService.redisInstance.del(userId);
   }
 
+  /**
+   * Refreshes access token if passed refresh token is valid
+   * @param refreshToken
+   */
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
     try {
       const { _id, username }: JwtPayload = await this.jwtService.verify(refreshToken);
@@ -77,6 +98,8 @@ export class AuthService {
       this.logger.debug(`Cannot refresh token: ${error.toString()}`);
     }
 
-    throw new UnauthorizedException('The refresh token is expired, or it is wrong');
+    throw new UnauthorizedException(
+      'The refresh token is expired, or it is wrong',
+    );
   }
 }

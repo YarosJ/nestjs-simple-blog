@@ -15,9 +15,18 @@ import { Role } from '../enums/role.enum';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) { }
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+  ) {}
 
-  async createUser({ username, password }: UserCredentialsDto): Promise<UserDocument> {
+  /**
+   * Creates a new user with received credentials
+   * @param username
+   * @param password
+   */
+  async createUser(
+    { username, password }: UserCredentialsDto,
+  ): Promise<UserDocument> {
     const salt: string = await bcrypt.genSalt();
     const newUserData: Partial<DocumentDefinition<UserDocument>> = {
       username,
@@ -40,10 +49,21 @@ export class UsersService {
     }
   }
 
+  /**
+   * Get a single user by id
+   * @param userFilterDto
+   */
   getUser(userFilterDto: GetUserFilterDto): Promise<UserDocument> {
     return this.userModel.findOne(userFilterDto).exec();
   }
 
+  /**
+   * Fetch users filtered with received criteria
+   * @param pageNumber
+   * @param pageSize
+   * @param sorting
+   * @param username
+   */
   async getUsers(
     {
       pageNumber,
@@ -76,11 +96,17 @@ export class UsersService {
     }
 
     return {
-      users: await usersQuery.populate({ path: 'posts', select: 'title' }).exec(),
       total: await totalQuery.exec(),
+      users: await usersQuery.populate(
+        { path: 'posts', select: 'title' },
+      ).exec(),
     };
   }
 
+  /**
+   * Deletes user by id
+   * @param userId
+   */
   async deleteUser(userId: Types.ObjectId): Promise<void> {
     const deletedUser = await this.userModel.findByIdAndDelete(userId);
 

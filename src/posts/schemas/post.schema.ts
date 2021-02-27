@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import PopulatedDocument from '../../types/PopulatedDocument';
-import { UserDocument } from '../../users/schemas/user.schema';
 import { Logger } from '@nestjs/common';
+import { UserDocument } from '../../users/schemas/user.schema';
+import PopulatedDocument from '../../types/PopulatedDocument';
 
 const logger = new Logger('PostSchema');
 
@@ -28,7 +28,11 @@ export class Post {
 
 export type PostDocument = Post & Document;
 
-export type PopulatedPostWithUser = PopulatedDocument<PostDocument, UserDocument, 'user'>;
+export type PopulatedPostWithUser = PopulatedDocument<
+  PostDocument,
+  UserDocument,
+  'user'
+>;
 
 const PostSchema = SchemaFactory.createForClass(Post);
 
@@ -41,16 +45,15 @@ PostSchema.virtual('resources', {
 
 PostSchema.index({ title: 'text', body: 'text' });
 
+// Removing related resources on post delete
 ['findOneAndDelete', 'deleteMany'].forEach(
   (queryName: string) => PostSchema.pre(queryName, async function(next) {
     const posts: PostDocument[] = await this.find(this);
 
     await Promise.all(posts.map(async (post: PostDocument) => {
-      const { length }: { length: number } = await post.model('Resource').deleteMany(
-        { post: post._id },
-        null,
-        next,
-      );
+      const { length }: { length: number } = await post
+        .model('Resource')
+        .deleteMany({ post: post._id }, null, next);
 
       logger.verbose(
         `Removed Resources related to Post with id: ${post._id}. Resources count: ${length}`,

@@ -1,18 +1,18 @@
 import {
+  Controller,
   Post,
   Body,
-  Controller,
   UseGuards,
   UploadedFile,
   UseInterceptors,
   Logger,
 } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ResourcesService } from './resources.service';
-import RequiredUserAuthGuard from 'src/helpers/RequiredUserAuth.guard';
 import { ResourceDocument } from './schemas/resource.schema';
 import { ObjectIdValidationPipe } from '../helpers/pipes/objectIdValidation.pipe';
-import { Types } from 'mongoose';
+import RequiredUserAuthGuard from 'src/helpers/guards/RequiredUserAuth.guard';
 import RolesGuard from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '../enums/role.enum';
@@ -29,7 +29,10 @@ export class ResourcesController {
   @UseInterceptors(FileInterceptor('file'))
   uploadResource(
     @UploadedFile() { filename },
-    @Body('postId', new ObjectIdValidationPipe(true)) post?: Types.ObjectId,
+    @Body(
+      'postId',
+      new ObjectIdValidationPipe(true),
+    ) post?: Types.ObjectId,
   ): Promise<ResourceDocument> {
     this.logger.verbose('Uploading a new resource');
 

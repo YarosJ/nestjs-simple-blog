@@ -1,15 +1,14 @@
 import {
-  Body,
   Controller,
-  Delete,
-  Get,
-  Logger,
-  Param,
-  Patch,
   Post,
+  Get,
+  Patch,
+  Delete,
+  Body,
   Query,
+  Param,
   UseGuards,
-  UseInterceptors,
+  Logger,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
 import * as sanitizeHtml from 'sanitize-html';
@@ -21,10 +20,9 @@ import { CreatePostDto } from './dto/createPost.dto';
 import { GetPostsFilterDto } from './dto/getPostsFilter.dto';
 import { GetUser } from '../users/getUser.decorator';
 import { Roles } from '../roles/roles.decorator';
-import { MongooseDocVersionInterceptor } from '../helpers/mongooseDocVersion.interceptor';
 import { ObjectIdValidationPipe } from '../helpers/pipes/objectIdValidation.pipe';
-import RequiredUserAuthGuard from '../helpers/RequiredUserAuth.guard';
-import OptionalUserAuthGuard from '../helpers/OptionalUserAuth.guard';
+import RequiredUserAuthGuard from '../helpers/guards/RequiredUserAuth.guard';
+import OptionalUserAuthGuard from '../helpers/guards/OptionalUserAuth.guard';
 import RolesGuard from '../roles/roles.guard';
 import { Role } from '../enums/role.enum';
 
@@ -39,7 +37,6 @@ const sanitizeHtmlOptions = {
 };
 
 @Controller('posts')
-@UseInterceptors(MongooseDocVersionInterceptor)
 export class PostsController {
   private logger = new Logger('PostsController');
 
@@ -49,7 +46,11 @@ export class PostsController {
   @Roles(Role.User, Role.Admin)
   @UseGuards(RequiredUserAuthGuard, RolesGuard)
   createPost(
-    @Body() { title, body, resources }: CreatePostDto,
+    @Body() {
+      title,
+      body,
+      resources,
+    }: CreatePostDto,
     @GetUser() user: UserDocument,
   ): Promise<PostDocument> {
     this.logger.verbose(
@@ -78,11 +79,6 @@ export class PostsController {
     return this.postsService.getPosts(filterDto, user);
   }
 
-  @Get('/newId')
-  @Roles(Role.User, Role.Admin)
-  @UseGuards(RequiredUserAuthGuard, RolesGuard)
-  fetchNewPostId(): Types.ObjectId { return Types.ObjectId(); }
-
   @Get('/:id')
   getPostById(
     @Param('id', new ObjectIdValidationPipe()) id: Types.ObjectId,
@@ -95,7 +91,11 @@ export class PostsController {
   @UseGuards(RequiredUserAuthGuard, RolesGuard)
   updatePost(
     @Param('id', new ObjectIdValidationPipe()) id: Types.ObjectId,
-    @Body() { title, body, resources }: CreatePostDto,
+    @Body() {
+      title,
+      body,
+      resources,
+    }: CreatePostDto,
     @GetUser() user: UserDocument,
   ): Promise<PostDocument> {
     return this.postsService.updatePost(

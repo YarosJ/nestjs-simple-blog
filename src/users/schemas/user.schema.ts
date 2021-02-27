@@ -48,6 +48,7 @@ UserSchema.virtual('posts', {
 
 UserSchema.index({ username: 'text' });
 
+// Removing user's posts on user delete
 UserSchema.pre('findOneAndDelete', async function(next) {
   const user: UserDocument = await this.findOne(this);
   const { length }: { length: number } = await user.model('Post').deleteMany(

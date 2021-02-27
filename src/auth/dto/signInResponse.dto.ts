@@ -2,7 +2,7 @@
 
 import { IsNotEmpty } from 'class-validator';
 
-export class SignInResponse {
+export class SignInResponseDto {
   @IsNotEmpty()
   accessToken: string;
 
