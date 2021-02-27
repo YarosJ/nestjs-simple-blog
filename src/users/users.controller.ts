@@ -44,7 +44,7 @@ export class UsersController {
 
   @Delete('/:id')
   deleteUser(
-    @Param('id', ObjectIdValidationPipe) id: Types.ObjectId,
+    @Param('id', new ObjectIdValidationPipe()) id: Types.ObjectId,
     @GetUser() { _id }: UserDocument,
   ): Promise<void> {
     if (id.equals(_id)) {

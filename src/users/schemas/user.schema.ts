@@ -1,7 +1,10 @@
 import * as bcrypt from 'bcryptjs';
 import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Logger } from '@nestjs/common';
 import { Role } from '../../enums/role.enum';
+
+const logger = new Logger('UserSchema');
 
 @Schema({
   toJSON: {
@@ -42,7 +45,22 @@ UserSchema.virtual('posts', {
   foreignField: 'user',
   justOne: false,
 });
+
 UserSchema.index({ username: 'text' });
+
+UserSchema.pre('findOneAndDelete', async function(next) {
+  const user: UserDocument = await this.findOne(this);
+  const { length }: { length: number } = await user.model('Post').deleteMany(
+    { user: user._id },
+    null,
+    next,
+  );
+
+  logger.verbose(
+    `Removed Posts related to User with id: ${user._id}. Posts count: ${length}`,
+  );
+});
+
 UserSchema.loadClass(User);
 
 export default UserSchema;

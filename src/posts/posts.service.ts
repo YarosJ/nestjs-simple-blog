@@ -1,6 +1,7 @@
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ResourcesService } from '../resources/resources.service';
 import { PopulatedPostWithUser, Post, PostDocument } from './schemas/post.schema';
 import { UserDocument } from '../users/schemas/user.schema';
 import { GetPostsFilterDto } from './dto/getPostsFilter.dto';
@@ -14,20 +15,27 @@ const userDefaultPopulationConfig = { path: 'user', select: 'username' };
 
 @Injectable()
 export class PostsService {
-  constructor(@InjectModel(Post.name) private readonly postModel: Model<PostDocument>) { }
+  constructor(
+    @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
+    private readonly resourcesService: ResourcesService,
+  ) {}
 
   /**
    * Post a single post
+   * @param resources
    * @param createPostDto
    * @param user
    */
   async createPost(
     createPostDto: CreatePostDto,
     user: UserDocument,
+    resources: Types.ObjectId[],
   ): Promise<PostDocument> {
     const createdPost: PostDocument = await this.postModel.create(
       { ...createPostDto, user: user._id },
     );
+
+    await this.resourcesService.updateResourcesPost(resources, createdPost._id);
 
     return createdPost.populate(userDefaultPopulationConfig);
   }
@@ -102,13 +110,15 @@ export class PostsService {
    * @param postId
    * @param createPostDto
    * @param user
+   * @param resources
    */
   async updatePost(
     postId: Types.ObjectId,
     createPostDto: CreatePostDto,
     user: UserDocument,
+    resources: Types.ObjectId[],
   ): Promise<PostDocument> {
-    const updatedPost = await this.postModel.findOneAndUpdate(
+    const updatedPost: PostDocument = await this.postModel.findOneAndUpdate(
       { _id: postId, user: user._id },
       createPostDto,
       { new: true },
@@ -117,6 +127,8 @@ export class PostsService {
     if (!updatedPost) {
       throwPostNotFoundError(postId);
     }
+
+    await this.resourcesService.updateResourcesPost(resources, postId);
 
     return updatedPost.populate(userDefaultPopulationConfig);
   }

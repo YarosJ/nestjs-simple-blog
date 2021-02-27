@@ -15,5 +15,6 @@ import * as path from 'path';
   ],
   controllers: [ResourcesController],
   providers: [ResourcesService],
+  exports: [ResourcesService],
 })
 export class ResourcesModule {}

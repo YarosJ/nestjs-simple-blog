@@ -49,7 +49,7 @@ export class PostsController {
   @Roles(Role.User, Role.Admin)
   @UseGuards(RequiredUserAuthGuard, RolesGuard)
   createPost(
-    @Body() { title, body, _id }: CreatePostDto,
+    @Body() { title, body, resources }: CreatePostDto,
     @GetUser() user: UserDocument,
   ): Promise<PostDocument> {
     this.logger.verbose(
@@ -57,8 +57,9 @@ export class PostsController {
     );
 
     return this.postsService.createPost(
-      { title, body: sanitizeHtml(body, sanitizeHtmlOptions), _id },
+      { title, body: sanitizeHtml(body, sanitizeHtmlOptions) },
       user,
+      resources,
     );
   }
 
@@ -84,7 +85,7 @@ export class PostsController {
 
   @Get('/:id')
   getPostById(
-    @Param('id', ObjectIdValidationPipe) id: Types.ObjectId,
+    @Param('id', new ObjectIdValidationPipe()) id: Types.ObjectId,
   ): Promise<PopulatedPostWithUser> {
     return this.postsService.getPost(id);
   }
@@ -93,14 +94,15 @@ export class PostsController {
   @Roles(Role.User, Role.Admin)
   @UseGuards(RequiredUserAuthGuard, RolesGuard)
   updatePost(
-    @Param('id', ObjectIdValidationPipe) id: Types.ObjectId,
-    @Body() { title, body }: CreatePostDto,
+    @Param('id', new ObjectIdValidationPipe()) id: Types.ObjectId,
+    @Body() { title, body, resources }: CreatePostDto,
     @GetUser() user: UserDocument,
   ): Promise<PostDocument> {
     return this.postsService.updatePost(
       id,
       { title, body: sanitizeHtml(body, sanitizeHtmlOptions) },
       user,
+      resources,
     );
   }
 
@@ -108,7 +110,7 @@ export class PostsController {
   @Roles(Role.User, Role.Admin)
   @UseGuards(RequiredUserAuthGuard, RolesGuard)
   deletePost(
-    @Param('id', ObjectIdValidationPipe) id: Types.ObjectId,
+    @Param('id', new ObjectIdValidationPipe()) id: Types.ObjectId,
     @GetUser() user: UserDocument,
   ): Promise<void> {
     return this.postsService.deletePost(id, user);

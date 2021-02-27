@@ -13,9 +13,13 @@ import RequiredUserAuthGuard from 'src/helpers/RequiredUserAuth.guard';
 import { ResourceDocument } from './schemas/resource.schema';
 import { ObjectIdValidationPipe } from '../helpers/pipes/objectIdValidation.pipe';
 import { Types } from 'mongoose';
+import RolesGuard from '../roles/roles.guard';
+import { Roles } from '../roles/roles.decorator';
+import { Role } from '../enums/role.enum';
 
 @Controller('resources')
-@UseGuards(RequiredUserAuthGuard)
+@Roles(Role.User, Role.Admin)
+@UseGuards(RequiredUserAuthGuard, RolesGuard)
 export class ResourcesController {
   private logger = new Logger('ResourcesController');
 
@@ -24,13 +28,11 @@ export class ResourcesController {
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   uploadResource(
-    @UploadedFile() resource,
-    @Body('postId', ObjectIdValidationPipe) postId: Types.ObjectId,
+    @UploadedFile() { filename },
+    @Body('postId', new ObjectIdValidationPipe(true)) post?: Types.ObjectId,
   ): Promise<ResourceDocument> {
-    this.logger.verbose(
-      `Uploading a new resource to the post with ID: ${postId}`,
-    );
+    this.logger.verbose('Uploading a new resource');
 
-    return this.resourcesService.createResource(resource, postId);
+    return this.resourcesService.createResource({ filename, post });
   }
 }

@@ -38,16 +38,25 @@ PostSchema.virtual('resources', {
   foreignField: 'post',
   justOne: false,
 });
-PostSchema.index({ title: 'text', body: 'text' });
-PostSchema.pre('findOneAndDelete', async function(next) {
-  const post: PostDocument = await this.findOne(this);
-  const { length }: { length: number } = await post.model('Resource').deleteMany(
-    { post: post._id },
-    null,
-    next,
-  );
 
-  logger.verbose(`Removing resources. Resources count: ${length}`);
-});
+PostSchema.index({ title: 'text', body: 'text' });
+
+['findOneAndDelete', 'deleteMany'].forEach(
+  (queryName: string) => PostSchema.pre(queryName, async function(next) {
+    const posts: PostDocument[] = await this.find(this);
+
+    await Promise.all(posts.map(async (post: PostDocument) => {
+      const { length }: { length: number } = await post.model('Resource').deleteMany(
+        { post: post._id },
+        null,
+        next,
+      );
+
+      logger.verbose(
+        `Removed Resources related to Post with id: ${post._id}. Resources count: ${length}`,
+      );
+    }));
+  }),
+);
 
 export default PostSchema;
