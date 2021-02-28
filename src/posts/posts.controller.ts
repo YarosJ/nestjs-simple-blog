@@ -13,6 +13,7 @@ import {
 import { Types } from 'mongoose';
 import * as sanitizeHtml from 'sanitize-html';
 import implicitQueryParams from 'nestjs-implicit-query-params';
+import sanitizeHtmlConfig from './sanitizeHtmlConfig';
 import { PopulatedPostWithUser, PostDocument } from './schemas/post.schema';
 import { UserDocument } from '../users/schemas/user.schema';
 import { PostsService } from './posts.service';
@@ -25,16 +26,6 @@ import RequiredUserAuthGuard from '../helpers/guards/RequiredUserAuth.guard';
 import OptionalUserAuthGuard from '../helpers/guards/OptionalUserAuth.guard';
 import RolesGuard from '../roles/roles.guard';
 import { Role } from '../enums/role.enum';
-
-const { allowedTags, allowedAttributes } = sanitizeHtml.defaults;
-
-const sanitizeHtmlOptions = {
-  allowedTags: [...allowedTags, 'img'],
-  allowedAttributes: {
-    ...allowedAttributes,
-    figure: ['class'],
-  },
-};
 
 @Controller('posts')
 export class PostsController {
@@ -58,7 +49,7 @@ export class PostsController {
     );
 
     return this.postsService.createPost(
-      { title, body: sanitizeHtml(body, sanitizeHtmlOptions) },
+      { title, body: sanitizeHtml(body, sanitizeHtmlConfig) },
       user,
       resources,
     );
@@ -100,7 +91,7 @@ export class PostsController {
   ): Promise<PostDocument> {
     return this.postsService.updatePost(
       id,
-      { title, body: sanitizeHtml(body, sanitizeHtmlOptions) },
+      { title, body: sanitizeHtml(body, sanitizeHtmlConfig) },
       user,
       resources,
     );
