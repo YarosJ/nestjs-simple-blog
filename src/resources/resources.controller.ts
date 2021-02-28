@@ -12,7 +12,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ResourcesService } from './resources.service';
 import { ResourceDocument } from './schemas/resource.schema';
 import { ObjectIdValidationPipe } from '../helpers/pipes/objectIdValidation.pipe';
-import RequiredUserAuthGuard from 'src/helpers/guards/RequiredUserAuth.guard';
+import RequiredUserAuthGuard from '../helpers/guards/RequiredUserAuth.guard';
 import RolesGuard from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '../enums/role.enum';

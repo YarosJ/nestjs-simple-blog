@@ -14,7 +14,7 @@ import { UsersService } from './users.service';
 import { UserDocument } from './schemas/user.schema';
 import { GetUsersFilterDto } from './dto/getUsersFilter.dto';
 import { ObjectIdValidationPipe } from '../helpers/pipes/objectIdValidation.pipe';
-import RequiredUserAuthGuard from 'src/helpers/guards/RequiredUserAuth.guard';
+import RequiredUserAuthGuard from '../helpers/guards/RequiredUserAuth.guard';
 import RolesGuard from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
 import { GetUser } from './getUser.decorator';
