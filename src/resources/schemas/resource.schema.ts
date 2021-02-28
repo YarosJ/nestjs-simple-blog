@@ -26,8 +26,6 @@ ResourceSchema.pre('deleteMany', async function(next) {
 
   await Promise.all(resourcesToRemove.map(async ({ filename }) => {
     try {
-      logger.verbose(`Removing from disk ${filename}`);
-
       await promises.unlink(resolve(config.get('uploads.path'), filename));
 
       logger.verbose(`Resource: ${filename} removed!`);

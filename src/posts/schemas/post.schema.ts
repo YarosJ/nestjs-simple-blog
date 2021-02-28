@@ -50,15 +50,20 @@ PostSchema.index({ title: 'text', body: 'text' });
   (queryName: string) => PostSchema.pre(queryName, async function(next) {
     const posts: PostDocument[] = await this.find(this);
 
-    await Promise.all(posts.map(async (post: PostDocument) => {
-      const { length }: { length: number } = await post
-        .model('Resource')
-        .deleteMany({ post: post._id }, null, next);
+    try {
+      await Promise.all(posts.map(async (post: PostDocument) => {
+        await post.model('Resource').deleteMany(
+          { post: post._id },
+          null,
+        );
 
-      logger.verbose(
-        `Removed Resources related to Post with id: ${post._id}. Resources count: ${length}`,
-      );
-    }));
+        logger.verbose(
+          `Removed Resources related to Post with id: ${post._id}`,
+        );
+      }));
+    } catch (error) {
+      return next(error);
+    }
   }),
 );
 
