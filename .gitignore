@@ -1,2 +1,5 @@
-node_modules
 dist
+static
+node_modules
+package-lock.json
+documentation

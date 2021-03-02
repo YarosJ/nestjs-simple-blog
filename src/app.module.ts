@@ -8,10 +8,14 @@ import { PostsModule } from './posts/posts.module';
 import { ResourcesModule } from './resources/resources.module';
 import * as config from 'config';
 
+const { dbName, url } = config.get('db');
+
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.DB_URI || config.get('db').uri),
     ServeStaticModule.forRoot({ rootPath: resolve('static') }),
+    MongooseModule.forRoot(
+      url || `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${dbName}`,
+    ),
     AuthModule,
     UsersModule,
     PostsModule,

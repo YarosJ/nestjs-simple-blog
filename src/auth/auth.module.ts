@@ -7,16 +7,16 @@ import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './jwt/jwt.strategy';
 import * as config from 'config';
 
-const jwtConfig = config.get('jwt');
+const { secret, expiresIn } = config.get('jwt');
 
 @Module({
   imports: [
     UsersModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || jwtConfig.secret,
+      secret: secret || process.env.JWT_SECRET,
       signOptions: {
-        expiresIn: jwtConfig.expiresIn.accessToken,
+        expiresIn: expiresIn.accessToken || process.env.ACCESS_TOKEN_EXPIRATION,
       },
     }),
   ],

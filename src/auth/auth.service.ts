@@ -19,10 +19,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {
     if (!AuthService.redisInstance) {
+      const { host, port } = config.get('redis');
+
       AuthService.redisInstance = new Redis({
         keyPrefix: 'jwt-refresh_',
-        host: process.env.REDIS_HOST || config.get('redis.host'),
-        port: process.env.REDIS_PORT || config.get('redis.port'),
+        host: host || process.env.REDIS_HOST,
+        port: port || process.env.REDIS_PORT,
       });
     }
   }
@@ -53,7 +55,7 @@ export class AuthService {
     const { _id, roles } = user;
     const payload: JwtPayload = { username, _id };
     const accessToken = await this.jwtService.sign(payload);
-    const refreshTokenExpiration = config.get('jwt.expiresIn.refreshToken');
+    const refreshTokenExpiration = process.env.REFRESH_TOKEN_EXPIRATION || config.get('jwt.expiresIn.refreshToken');
     const refreshToken = await AuthService.redisInstance.get(_id) || await this.jwtService.sign(payload, {
       expiresIn: refreshTokenExpiration,
     });
