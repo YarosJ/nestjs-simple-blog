@@ -108,10 +108,24 @@ export class UsersService {
    * @param userId
    */
   async deleteUser(userId: Types.ObjectId): Promise<void> {
-    const deletedUser = await this.userModel.findByIdAndDelete(userId);
+    const session = await this.userModel.startSession();
 
-    if (!deletedUser) {
-      throw new NotFoundException(`User with ID "${userId}" not found`);
-    }
+    // NOTE: There is no sense to use a transaction for such a case
+    // (here it is used just for example)
+    await session.withTransaction(async () => {
+
+      /*
+       Here can be added operation which can fault
+       Operations will be undone on error
+      */
+
+      const deletedUser = await this.userModel.findByIdAndDelete(userId);
+
+      if (!deletedUser) {
+        throw new NotFoundException(`User with ID "${userId}" not found`);
+      }
+    });
+
+    session.endSession();
   }
 }

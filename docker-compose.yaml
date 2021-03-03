@@ -6,30 +6,20 @@ services:
     environment:
       - PORT=5000
       - ORIGIN=https://www.development.com/
-      - MONGO_HOST=mongo
-      - MONGO_PORT=27017
+      - MONGO_RS_CONNECTION=mongo0:27017,mongo1:27017,mongo2:27017
+      - MONGO_RS=mongo_rs
       - REDIS_HOST=redis
     ports:
       - 5000:5000
+      - 9229:9229
     build: .
     volumes:
       - .:/app
       - /app/node_modules/
     command: npm run start:dev
     depends_on:
-      - mongo
+      - mongosetup
       - redis
-    networks:
-      - blog
-
-  mongo:
-    container_name: mongo
-    image: mongo
-    ports:
-      - 27017:27017
-    volumes:
-      - mongo_volume:/data/db
-    restart: always
     networks:
       - blog
 
@@ -44,10 +34,55 @@ services:
     networks:
       - blog
 
+  mongosetup:
+    image: mongo:4.0-xenial
+    entrypoint: ["bash", "/scripts/mongo_setup.sh"]
+    environment:
+      - PORT=27017
+    depends_on:
+      - mongo0
+      - mongo1
+      - mongo2
+    volumes:
+      - .:/scripts
+    networks:
+      - mongo-cluster
+    restart: "no"
+  mongo0:
+    hostname: mongo0
+    container_name: mongo_rs0
+    image: mongo:4.0-xenial
+    entrypoint: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0"]
+    expose:
+      - 27017
+    networks:
+      - mongo-cluster
+      - blog
+    restart: always
+  mongo1:
+    hostname: mongo1
+    container_name: mongo_rs1
+    image: mongo:4.0-xenial
+    entrypoint: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0"]
+    expose:
+      - 27017
+    networks:
+      - mongo-cluster
+      - blog
+    restart: always
+  mongo2:
+    hostname: mongo2
+    container_name: mongo_rs2
+    image: mongo:4.0-xenial
+    entrypoint: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0"]
+    expose:
+      - 27017
+    networks:
+      - mongo-cluster
+      - blog
+    restart: always
+
 networks:
   blog:
     driver: bridge
-
-volumes:
-  mongo_volume:
-    driver: local
+  mongo-cluster:

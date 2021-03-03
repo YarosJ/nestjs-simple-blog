@@ -14,7 +14,7 @@ const { dbName, url } = config.get('db');
   imports: [
     ServeStaticModule.forRoot({ rootPath: resolve('static') }),
     MongooseModule.forRoot(
-      url || `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${dbName}`,
+      url || `mongodb://${process.env.MONGO_RS_CONNECTION}/${dbName}?replicaSet=${process.env.MONGO_RS}`,
     ),
     AuthModule,
     UsersModule,
