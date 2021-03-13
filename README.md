@@ -11,6 +11,8 @@
 
 Simple blog backend application created with usage of the NestJS and Mongoose.
 
+Also, there is a [client application](https://github.com/YarosJ/reactjs-simple-blog), which can be launched on a separate host. If you want to use it on the same host - you can copy client build content into the "static" folder, the "origin" can be set in the docker-compose file as the "ORIGIN" environment variable.
+
 ## Installation
 
 ```bash
